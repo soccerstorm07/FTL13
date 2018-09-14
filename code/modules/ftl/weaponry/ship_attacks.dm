@@ -1,17 +1,21 @@
-/datum/ship_attack
+/datum/ship_attack //DATUM WITH INFO ON AN ATTACK
 	var/cname = "Ship Attack"
+
+	var/charge_to_fire = 0 //Only used on player ships
 
 	var/hull_damage = 0 //How much integrity damage an attack does
 	var/shield_damage = 1000 //How much shield damage an attack does. Wont do anything if it penetrates shields.
-	var/evasion_mod = 1
+	var/shot_accuracy = 1
 
 	var/fire_attack = 0 //TODO: Code fire damage for enemy ships
-	var/emp_attack = 0
+	var/emp_attack = 0 //Time the EMP lasts
+
+	var/fire_delay = 5
+	var/shots_fired = 1 //THATS THE WROONG NUMBER OOOOOO
+
 	var/projectile_effect = "emitter"
 	var/datum/ship_component/our_ship_component // the component we are owned by, used to add weapon specific changes via ship variables instead of subtypes
 	var/unique_effect = NONE //Used to store unique effects like increasing ship boarding chance
-	var/unique_effect_modifier_one //Contains information such as number of fragmented hits from a single attack
-	var/unique_effect_modifier_two //Secondary modifier var.
 	var/warning_time = 30 //Time between target visual and projectile spawn
 	var/warning_volume = 100
 
@@ -19,14 +23,53 @@
 /datum/ship_attack/proc/damage_effects(var/turf/epicenter)
 	return
 
+/datum/ship_attack/proc/attack_effect(var/turf/T)
+	new /obj/effect/temp_visual/ship_target(T, src)
+
 /datum/ship_attack/laser
-	cname = "phase cannon"
+	cname = "basic phase cannon"
 	projectile_effect = "heavylaser"
 
 	hull_damage = 1
+	charge_to_fire = 2000
 
 /datum/ship_attack/laser/damage_effects(epicenter)
-	explosion(epicenter,1,3,5,10)
+	explosion(epicenter,1,2,3,5,SSship.ship_combat_log_spam)
+
+
+/datum/ship_attack/laser/burst
+	cname = "burst phase cannon"
+	projectile_effect = "heavylaser"
+
+	shots_fired = 3
+	shot_accuracy = 0.95
+	charge_to_fire = 5000
+
+/datum/ship_attack/laser/focused
+	cname = "focused phase cannon"
+	projectile_effect = "heavylaser"
+
+	shots_fired = 1
+	shot_accuracy = 1.2
+	charge_to_fire = 3000
+
+/datum/ship_attack/laser/heavy
+	cname = "heavy phase cannon"
+	projectile_effect = "heavylaser"
+
+	shot_accuracy = 0.95
+	hull_damage = 2
+	shield_damage = 2500
+	charge_to_fire = 3000
+
+/datum/ship_attack/laser/gatling
+	cname = "gatling phase cannon"
+	projectile_effect = "heavylaser"
+
+	shots_fired = 10
+	shot_accuracy = 0.5
+	fire_delay = 2
+	charge_to_fire = 10000
 
 /datum/ship_attack/ballistic
 	cname = "mac cannon"
@@ -41,7 +84,7 @@
 		if(istype(T))
 			clusters += T
 	for(var/i in 1 to rand(3,5))
-		explosion(pick(clusters),max(0,rand(-4,1)),1,rand(3,6))
+		explosion(pick(clusters),max(0,rand(-4,1)),1,rand(2,4),0,SSship.ship_combat_log_spam)
 		sleep(rand(5,10))
 
 /datum/ship_attack/shield_penetrator
@@ -56,6 +99,8 @@
 	hull_damage = 1
 	shield_damage = 500
 
+	shot_accuracy = 0.8
+
 /datum/ship_attack/planet_killer
 	cname = "mac-pk"
 
@@ -67,7 +112,7 @@
 
 	hull_damage = 3
 	shield_damage = 500
-	evasion_mod = 0.5
+	shot_accuracy = 1.4
 
 //enemy only attacks
 
@@ -77,7 +122,7 @@
 
 	hull_damage = 5
 	shield_damage = 2000
-	evasion_mod = 0.75
+	shot_accuracy = 0.85
 
 /datum/ship_attack/chaingun/damage_effects(turf/epicenter)
 	var/turf/sample_T
@@ -100,7 +145,7 @@
 		var/offset = rand(-1,1)
 		var/turf/p_T = locate(new_T.x + (round(offset * partial * px)), new_T.y + (round(offset * partial * py)), epicenter.z)
 
-		explosion(p_T,1,2,rand(3,6))
+		explosion(p_T,0,1,rand(2,4),0,SSship.ship_combat_log_spam)
 
 		old_T = new_T
 		sleep(rand(1,5))
@@ -122,7 +167,7 @@
 			return
 
 	playsound(epicenter, 'sound/magic/lightningbolt.ogg', 100, 1)
-	epicenter.atmos_spawn_air("o2=500;plasma=500;TEMP=1000") //BURN BABY BURN
+	epicenter.atmos_spawn_air("o2=300;plasma=300;TEMP=1000") //BURN BABY BURN
 
 /datum/ship_attack/stun_bomb
 	cname = "stun bomb"
@@ -141,8 +186,12 @@
 	cname = "ion cannon"
 	projectile_effect = "bluespace"
 
-	hull_damage = 4 //TODO: and ion damage too
-	unique_effect = ION_BOARDING_BOOST | SHIELD_PENETRATE
+	hull_damage = 0
+	shield_damage = 3000
+	emp_attack = 100
+	charge_to_fire = 5000
+
+	unique_effect = ION_BOARDING_BOOST
 
 /datum/ship_attack/ion/damage_effects(turf/epicenter)
 	var/image/effect = image('icons/obj/tesla_engine/energy_ball.dmi', "energy_ball_fast", layer=FLY_LAYER)
@@ -150,7 +199,7 @@
 
 	flick_overlay_static(effect,get_step(epicenter,SOUTHWEST),15)
 	playsound(epicenter, 'sound/magic/lightningbolt.ogg', 100, 1)
-	empulse(epicenter,5,10,1)
+	empulse(epicenter,3,7,1)
 
 /datum/ship_attack/carrier_weapon
 	cname = "Carrier Blaster"
@@ -165,7 +214,8 @@
 	for(var/I = 1 to amount)
 		var/path = pick(boarding_mobs)
 		var/mob/to_spawn = new path(epicenter)
-		to_spawn.faction = list(our_ship_component.ship.faction)
+		if(our_ship_component.ship) //Means that attacks spawned from verbs deafult to Syndicate and don't runtime
+			to_spawn.faction = list(our_ship_component.ship.faction)
 
 /datum/ship_attack/carrier_weapon/oneTime
 	var/fired = FALSE
@@ -174,6 +224,7 @@
 	if(!fired)
 		..()
 		fired = TRUE
+		emp_attack = 5
 	else
 		empulse(epicenter,2.5,5,1)  //So we don't print empty attack damage info; a weaker ion blast
 
@@ -185,7 +236,17 @@
 	shield_damage = 4000
 
 /datum/ship_attack/prototype_laser_barrage/damage_effects(turf/epicenter)
-	explosion(epicenter,1,3,6,9)
+	explosion(epicenter,1,3,6,9,SSship.ship_combat_log_spam)
+
+/datum/ship_attack/prototype_laser_barrage/proc/subimpact(var/turf/T)
+	new /obj/effect/temp_visual/ship_target(T, src)
+
+/datum/ship_attack/prototype_laser_barrage/attack_effect(var/turf/T) //10 shots, 7 spread
+	var/turf/target_sub
+	new /obj/effect/temp_visual/ship_target(T, src) //Initial hit
+	for(var/I = 1 to 10) //Loop for each fragment
+		target_sub = locate(T.x + rand(-7,7),T.y + rand(-7,7), T.z)
+		addtimer(CALLBACK(src, .proc/subimpact, target_sub), warning_time+(2*I)) //Saves spamming many audio queues at once
 
 //Below is the hell of adminbus weaponry, keep these at the bottom like they should be :^). Don't use these on serious ships.
 
@@ -281,7 +342,7 @@
 
 /datum/ship_attack/carrier_weapon/catgirl
 	cname = "Cat-astrophy"
-
+	amount = 2
 	boarding_mobs = list(/mob/living/carbon/human/interactive/angry) //Floyd when he sees this PR
 
 /datum/ship_attack/carrier_weapon/catgirl/damage_effects(turf/epicenter)

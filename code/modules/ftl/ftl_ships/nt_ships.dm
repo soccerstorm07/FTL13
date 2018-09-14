@@ -10,7 +10,7 @@
 
 	hull_integrity = 10
 	shield_strength = 1000
-	evasion_chance = 25
+	hit_chance = 0.85
 
 	repair_time = 300
 	recharge_rate = 150
@@ -42,13 +42,13 @@
 
 	hull_integrity = 15
 	shield_strength = 2000
-	evasion_chance = 20
+	hit_chance = 0.9
 
 	repair_time = 300
 	recharge_rate = 150
 	build_resources = list("iron" = 600, "silicon" = 400)
 	init_ship_components = list("1,1" = "hull", "1,2" = "mac_cannon", "3,1" = "hull",\
-	"1,2" = "fast_weapon", "2,2" = "cockpit", "3,2" = "s_weapon",\
+	"1,2" = "r_weapon_laser", "2,2" = "cockpit", "3,2" = "s_weapon",\
 	"1,3" = "hull", "2,3" = "reactor", "3,3" = "hull",\
 	"1,4" = "engine", "2,4" = "hull", "3,4" = "engine")
 
@@ -75,7 +75,7 @@
 
 	hull_integrity = 30
 	shield_strength = 2000
-	evasion_chance = 5
+	hit_chance = 1.05
 
 	repair_time = 250
 	recharge_rate = 200
@@ -83,7 +83,7 @@
 	heat_points = 10
 
 	init_ship_components = list("1,1" = "hull", "2,1" = "mac_cannon", "3,1" = "chaingun", "4,1" = "hull",\
-	"1,2" = "fast_weapon", "2,2" = "cockpit", "3,2" = "repair", "4,2" = "s_weapon",\
+	"1,2" = "r_weapon_laser", "2,2" = "cockpit", "3,2" = "repair", "4,2" = "s_weapon",\
 	"1,3" = "hull", "2,3" = "shields", "3,3" = "reactor", "4,3" = "hull",\
 	"1,4" = "engine", "2,4" = "engine", "3,4" = "engine", "4,4" = "engine")
 

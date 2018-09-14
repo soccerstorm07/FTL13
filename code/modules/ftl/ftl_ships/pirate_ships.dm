@@ -14,7 +14,7 @@
 
 	hull_integrity = 10
 	shield_strength = 1000
-	evasion_chance = 15
+	hit_chance = 0.95
 
 	repair_time = 400
 	recharge_rate = 200
@@ -47,13 +47,13 @@
 
 	hull_integrity = 30
 	shield_strength = 1000
-	evasion_chance = 1 //its a fucking asteroid, if you miss this you are stupid
+	hit_chance = 1.1 //its a fucking asteroid, if you miss this you are stupid
 
 	repair_time = 300
 	recharge_rate = 200
 	heat_points = 5
 
-	init_ship_components = list("1,1" = "hull", "2,1" = "chaingun", "3,1" = "weapon", "4,1" = "hull",\
+	init_ship_components = list("1,1" = "hull", "2,1" = "chaingun", "3,1" = "r_weapon_laser", "4,1" = "hull",\
 	"1,2" = "s_weapon", "2,2" = "hull", "3,2" = "hull", "4,2" = "s_weapon",\
 	"1,3" = "hull", "2,3" = "repair", "3,3" = "cockpit", "4,3" = "hull",\
 	"1,3" = "hull","2,3" = "shield", "3,3" = "reactor", "3,4" = "hull",\
